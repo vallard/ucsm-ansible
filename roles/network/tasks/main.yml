@@ -1,5 +1,18 @@
 ---
 # This role contains tasks for configuring LAN settings in UCS.
+#
+- name: ensure Adaptor settings are in place
+  cisco_ucs_adaptor_policy:
+    name: "{{ item.name }}"
+    descr: "{{ item.descr }}"
+    rss: "{{ item.rss }}"
+    vxlan: "{{ item.vxlan }}"
+    ucs_ip: "{{ucs_ip}}"
+    ucs_username: "{{ucs_username}}"
+    ucs_password: "{{ucs_password}}"
+  with_items:
+    - "{{ adaptor_policies }}"
+
 - name: ensure QoS groups are in place
   cisco_ucs_qos_policy: 
     name: "{{ item.name }}"

@@ -109,6 +109,8 @@ def update_nic(server, vnic, org):
     if not "stats_policy" in vnic:
         vnic["stats_policy"] = "default"
 
+    if len(vnic['name']) > 15:
+        raise Exception("VNIC name '%s' is too long.  Length must be between 1 and 16 alphanumeric characters." % vnic['name'])
     # default template is updating, this is different than  
     # standard UCS because UCS made the wrong decision for
     # default.  

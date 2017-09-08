@@ -6,7 +6,12 @@ qos_policies:
     priority: gold
   - name: silver
     priority: silver
-    
+
+adaptor_policies:
+  - name: cisco-vsan
+    descr: settings for vsan with vxlan
+    rss: enabled
+    vxlan: enabled    
 
 mac_list:
   - name: cisco-vsan-A
