@@ -122,10 +122,13 @@ def setup_lan_connectivity(server, module):
             if not exists:
                 changed = True
                 if not module.check_mode:
+                    if len(lan_conn['name']) > 15:
+                        raise Exception("LAN name %s is too long.  Must be between 1 and 16 alphanumeric characters." % lan_conn['name'])
                     # create if mo does not already exist
 	            mo = VnicLanConnPolicy(parent_mo_or_dn=args_mo['org_dn'],
 	                                   name=lan_conn['name'])
                     for vnic in lan_conn['vnic_list']:
+                       
                         mo_2 = VnicEther(parent_mo_or_dn=mo,
                                       addr="derived",
 		                      adaptor_profile_name=vnic['adapter_policy'],

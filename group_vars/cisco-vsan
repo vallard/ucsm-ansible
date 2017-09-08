@@ -25,19 +25,19 @@ mac_list:
     from: 00:25:B5:77:BB:00
     to: 00:25:B5:77:BB:FF
 vnic_list: 
-  - name: cisco-vsan-mgmt-A
+  - name: vsan-mgmt-A
     side: A
     mac_pool: cisco-vsan-A
     description: cisco-vsan A side VNIC
     vlans:
     - ESXi-MGMT
-  - name: cisco-vsan-mgmt-B
+  - name: vsan-mgmt-B
     side: B
     mac_pool: cisco-vsan-B
     description: cisco-vsan B side VNIC
     vlans: 
     - ESXi-MGMT
-  - name: cisco-vsan-data-A
+  - name: vsan-data-A
     side: A
     mac_pool: cisco-vsan-A
     description: cisco-vsan A side VNIC
@@ -46,7 +46,7 @@ vnic_list:
     - vTEP
     - vMotion
     mtu: "9000"
-  - name: cisco-vsan-data-B
+  - name: vsan-data-B
     side: B
     qos: gold
     mac_pool: cisco-vsan-B
@@ -55,14 +55,14 @@ vnic_list:
     - vTEP
     - vMotion
     mtu: "9000"
-  - name: cisco-vsan-vsan-A
+  - name: vsan-vsan-A
     side: A
     mac_pool: cisco-vsan-A
     description: cisco-vsan A side VNIC
     vlans: 
     - vSAN
     mtu: "9000"
-  - name: cisco-vsan-vsan-B
+  - name: vsan-vsan-B
     side: B
     mac_pool: cisco-vsan-B
     description: cisco-vsan B side VNIC
@@ -74,27 +74,27 @@ lan_conn_list:
   - name: cisco-vsan
     vnic_list:
     - name: eth0
-      vnic_template: cisco-vsan-mgmt-A
+      vnic_template: vsan-mgmt-A
       order: "1"
       adapter_policy: VMWare
     - name: eth1
-      vnic_template: cisco-vsan-mgmt-B
+      vnic_template: vsan-mgmt-B
       order: "2"
       adapter_policy: VMWare
     - name: eth2
-      vnic_template: cisco-vsan-data-A
+      vnic_template: vsan-data-A
       order: "3"
       adapter_policy: VMWare
     - name: eth3
-      vnic_template: cisco-vsan-data-B
+      vnic_template: vsan-data-B
       order: "4"
       adapter_policy: VMWare
     - name: eth4
-      vnic_template: cisco-vsan-vsan-A
+      vnic_template: vsan-vsan-A
       order: "5"
       adapter_policy: VMWare
     - name: eth5
-      vnic_template: cisco-vsan-vsan-B
+      vnic_template: vsan-vsan-B
       order: "6"
       adapter_policy: VMWare
 
