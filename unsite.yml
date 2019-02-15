@@ -1,0 +1,121 @@
+---
+
+- hosts: ucs
+  connection: local
+  gather_facts: no
+
+  tasks:
+  - name: Test that we have a UCS host, UCS username, and UCS password
+    fail:
+      msg: 'Please define the following variables: ucs_hostname, ucs_username and ucs_password.'
+    when: ucs_hostname is not defined or ucs_username is not defined or ucs_password is not defined
+    vars:
+      login_info: &login_info
+        hostname: "{{ ucs_hostname }}"
+        username: "{{ ucs_username }}"
+        password: "{{ ucs_password }}"
+      default_org: &default_org
+        org_dn: org-root/org-Ansible
+  # remove server policies
+  
+  - name: Dissassociate node01 from service profile
+    ucs_service_profile_association:
+      <<: *login_info
+      <<: *default_org
+      service_profile_name: node01
+      server_assignment: server
+      server_dn: sys/chassis-1/blade-1
+      state: absent
+
+  - name: Ensure node01 service profile is removed
+    ucs_service_profile_from_template:
+      <<: *login_info
+      <<: *default_org
+      name: node01 
+      source_template: CentOS
+      state: absent
+
+  - name: Ensure service profile template is removed
+    ucs_service_profile_template:
+      <<: *login_info
+      <<: *default_org
+      name: CentOS
+      state: absent
+
+  - name: Remove Server UUID Pools
+    ucs_uuid_pool:
+      <<: *login_info
+      <<: *default_org
+      name: Ansible-Pool
+      state: absent
+
+  # remove network policies
+  - name: Remove Connectivity Policy
+    ucs_lan_connectivity:
+      <<: *login_info
+      <<: *default_org
+      name: Linux
+      state: absent
+
+  - name: UnConfigure UCS vNIC eth0
+    ucs_vnic_template:
+      <<: *login_info
+      <<: *default_org
+      name: eth0
+      state: absent
+
+  - name: UnConfigure UCS vNIC eth1
+    ucs_vnic_template:
+      <<: *login_info
+      <<: *default_org
+      name: eth1
+      state: absent
+
+  - name: UnConfigure MAC address pool A
+    ucs_mac_pool:
+      <<: *login_info
+      <<: *default_org
+      name: mac-A
+      state: absent
+
+  - name: UnConfigure MAC address pool B
+    ucs_mac_pool:
+      <<: *login_info
+      <<: *default_org
+      name: mac-B
+      state: absent
+
+  - name: Delete VLANs
+    ucs_vlans:
+      <<: *login_info
+      name: "vlan{{ item.id }}"
+      id: "{{ item.id }}"
+      native: "{{ item.native }}"
+      state: absent
+    loop:
+      - { id: '100', native: 'no' }
+      - { id: '101', native: 'no' }
+
+  - name: Delete  NTP server
+    ucs_ntp_server:
+      <<: *login_info
+      ntp_server: 72.163.32.44
+      state: absent
+
+  - name: Delete Org
+    ucs_org:
+      <<: *login_info
+      org_name: Ansible
+      description: Ansible Test
+      state: absent
+      delegate_to: localhost
+
+  - name: Delete Time Zone
+    ucs_timezone:
+      <<: *login_info
+      state: absent
+      admin_state: enabled
+      timezone: America/Los_Angeles (Pacific Time)
+      description: 'Time Zone for Oregon'
+
+

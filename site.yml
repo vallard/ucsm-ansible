@@ -1,79 +1,41 @@
 ---
 
-- hosts: localhost
-  connection: local
-  gather_facts: no
-  roles:
-  - common
-
 - hosts: ucs
   connection: local
   gather_facts: no
   roles:
-  - boot_order
+  - admin
+  - network
+  - server
   tasks:
-  - name: enable ntp
-    cisco_ucs_ntp:
-      name: "{{ntp_server}}"
-      descr: Ansible managed NTP
-      state: present
-      ucs_ip: "{{ucs_ip}}"
-      ucs_username: "{{ucs_username}}"
-      ucs_password: "{{ucs_password}}"
-  - name: configure dns
-    cisco_ucs_dns:
-      name: "{{dns_server}}"
-      descr: Ansible managed DNS
-      state: present
-      ucs_ip: "{{ucs_ip}}"
-      ucs_username: "{{ucs_username}}"
-      ucs_password: "{{ucs_password}}"
-  - name: configure WWN pools
-    cisco_ucs_wwn:
-      wwn_list: "{{wwn_list}}"
-      ucs_ip: "{{ucs_ip}}"
-      ucs_username: "{{ucs_username}}"
-      ucs_password: "{{ucs_password}}"
-  - name: configure vHBA templates
-    cisco_ucs_vhba_template:
-      vhba_list: "{{vhba_list}}"
-      ucs_ip: "{{ucs_ip}}"
-      ucs_username: "{{ucs_username}}"
-      ucs_password: "{{ucs_password}}"
-  - name: configure SAN connectivity policies
-    cisco_ucs_san_connectivity:
-      san_conn_list: "{{san_conn_list}}"
-      ucs_ip: "{{ucs_ip}}"
-      ucs_username: "{{ucs_username}}"
-      ucs_password: "{{ucs_password}}"
-  - name: configure UUID pool
-    cisco_ucs_uuid:
-      uuid_pool: "{{uuid_pool}}"
-      ucs_ip: "{{ucs_ip}}"
-      ucs_username: "{{ucs_username}}"
-      ucs_password: "{{ucs_password}}"
-  - name: configure disk group policy
-    cisco_ucs_disk_group_policy:
-      disk_group_policy: "{{disk_group_policy}}"
-      ucs_ip: "{{ucs_ip}}"
-      ucs_username: "{{ucs_username}}"
-      ucs_password: "{{ucs_password}}"
-  - name: configure storage profile
-    cisco_ucs_storage_profile:
-      storage_profile: "{{storage_profile}}"
-      ucs_ip: "{{ucs_ip}}"
-      ucs_username: "{{ucs_username}}"
-      ucs_password: "{{ucs_password}}"
-  - name: configure Service Profile Templates
-    cisco_ucs_spt:
-      spt_list: "{{service_profile_template_list}}"
-      ucs_ip: "{{ucs_ip}}"
-      ucs_username: "{{ucs_username}}"
-      ucs_password: "{{ucs_password}}"
-  - name: configure Service Profiles
-    cisco_ucs_sp:
-      sp_list: "{{service_profile_list}}"
-      ucs_ip: "{{ucs_ip}}"
-      ucs_username: "{{ucs_username}}"
-      ucs_password: "{{ucs_password}}"
 
+  - name: Test that we have a UCS host, UCS username, and UCS password
+    fail:
+      msg: 'Please define the following variables: ucs_hostname, ucs_username and ucs_password.'
+    when: ucs_hostname is not defined or ucs_username is not defined or ucs_password is not defined
+    vars:
+      login_info: &login_info
+        hostname: "{{ ucs_hostname }}"
+        username: "{{ ucs_username }}"
+        password: "{{ ucs_password }}"
+      default_org: &default_org
+        org_dn: org-root/org-Ansible
+  
+  - name: Ensure servers from the template are created
+    ucs_service_profile_from_template:
+      <<: *login_info
+      <<: *default_org
+      name: node01 
+      source_template: CentOS
+
+  - name: Associate A server and install CentOS 7.5
+    ucs_service_profile_association:
+      <<: *login_info
+      <<: *default_org
+      service_profile_name: node01
+      server_assignment: server
+      server_dn: sys/chassis-1/blade-1
+      #register: result
+      #until: result.assign_state == 'assigned' and result.assoc_state == 'associated'
+      #retries: 10
+      #delay: 60

@@ -1,49 +1,85 @@
 ---
-# This role contains tasks for configuring LAN settings in UCS.
-#
-- name: ensure Adaptor settings are in place
-  cisco_ucs_adaptor_policy:
-    name: "{{ item.name }}"
-    descr: "{{ item.descr }}"
-    rss: "{{ item.rss }}"
-    vxlan: "{{ item.vxlan }}"
-    ucs_ip: "{{ucs_ip}}"
-    ucs_username: "{{ucs_username}}"
-    ucs_password: "{{ucs_password}}"
-  with_items:
-    - "{{ adaptor_policies }}"
+- name: Test that we have a UCS host, UCS username, and UCS password
+  fail:
+    msg: 'Please define the following variables: ucs_hostname, ucs_username and ucs_password.'
+  when: ucs_hostname is not defined or ucs_username is not defined or ucs_password is not defined
+  vars:
+    login_info: &login_info
+      hostname: "{{ ucs_hostname }}"
+      username: "{{ ucs_username }}"
+      password: "{{ ucs_password }}"
+    default_org: &default_org
+      org_dn: org-root/org-Ansible
 
-- name: ensure QoS groups are in place
-  cisco_ucs_qos_policy: 
-    name: "{{ item.name }}"
-    priority: "{{ item.priority }}"
-    ucs_ip: "{{ucs_ip}}"
-    ucs_username: "{{ucs_username}}"
-    ucs_password: "{{ucs_password}}"
-  with_items:
-    - "{{ qos_policies }}"
-    
-- name: ensure MAC pools are in place
-  cisco_ucs_macpool:
-    mac_list: "{{ mac_list }}"
-    ucs_ip: "{{ucs_ip}}"
-    ucs_username: "{{ucs_username}}"
-    ucs_password: "{{ucs_password}}"
-    
-- name: ensure vNIC templates are in place
-  cisco_ucs_vnic_template:
-    vnic_list: "{{ vnic_list }}"
-    ucs_ip: "{{ucs_ip}}"
-    ucs_username: "{{ucs_username}}"
-    ucs_password: "{{ucs_password}}"
+- name: Configure VLANs
+  ucs_vlans:
+    <<: *login_info
+    name: "vlan{{ item.id }}"
+    id: "{{ item.id }}"
+    native: "{{ item.native }}"
+  loop:
+    - { id: '100', native: 'no' }
+    - { id: '101', native: 'no' }
 
-- name: encure LAN connectivity policy is in place
-  cisco_ucs_lan_connectivity: 
-    lan_conn_list: "{{ lan_conn_list }}"
-    ucs_ip: "{{ucs_ip}}"
-    ucs_username: "{{ucs_username}}"
-    ucs_password: "{{ucs_password}}"
-  
+- name: Configure MAC address pool A
+  ucs_mac_pool:
+    <<: *login_info
+    <<: *default_org
+    name: mac-A
+    first_addr: 00:25:B5:AA:A1:00
+    last_addr: 00:25:B5:AA:A1:FF
+    order: sequential
 
+- name: Configure MAC address pool B
+  ucs_mac_pool:
+    <<: *login_info
+    <<: *default_org
+    name: mac-B
+    first_addr: 00:25:B5:BB:B1:00
+    last_addr: 00:25:B5:BB:B1:FF
+    order: sequential
 
+- name: Configure UCS vNIC eth0
+  ucs_vnic_template:
+    <<: *login_info
+    <<: *default_org
+    name: eth0
+    mac_pool: mac-A
+    cdn_source: vnic-name
+    fabric: A
+    template_type: updating-template
+    vlans_list:
+    - name: HOSTS
+      native: 'yes'
+      state: present
+    - name: 'vlan100'
+    - name: 'vlan101'
 
+- name: Configure UCS vNIC eth1
+  ucs_vnic_template:
+    <<: *login_info
+    <<: *default_org
+    name: eth1
+    mac_pool: mac-B
+    cdn_source: vnic-name
+    fabric: B
+    template_type: updating-template
+    vlans_list:
+    - name: HOSTS
+      native: 'yes'
+    - name: 'vlan100'
+    - name: 'vlan101'
+
+- name: Configure LAN Connectivity Policy
+  ucs_lan_connectivity:
+    <<: *login_info
+    <<: *default_org
+    name: Linux
+    description: Default Linux Systems
+    vnic_list:
+    - name: eth0
+      vnic_template: eth0
+      adapter_policy: Linux
+    - name: eth1
+      vnic_template: eth1
+      adapter_policy: Linux

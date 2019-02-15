@@ -1,0 +1,2 @@
+[ucs]
+ucs1 ucs_hostname=10.93.130.100 ucs_username=admin ucs_password=admin ucs_state=present
